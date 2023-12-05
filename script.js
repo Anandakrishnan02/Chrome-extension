@@ -1,11 +1,56 @@
-import puppeteer from "puppeteer"
+import puppeteer from "puppeteer";
+import xlsx from "xlsx";
+
+function readExcelFile(filePath) {
+  const workbook = xlsx.readFile(filePath);
+  const firstSheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[firstSheetName];
+  const jsonData = xlsx.utils.sheet_to_json(worksheet);
+  return jsonData;
+}
+
+async function RpaAutomate() {
+  const jsonDataFromXlsx = readExcelFile("./challenge.xlsx");
+  const browser = await puppeteer.launch({ headless:false });
+  const page = await browser.newPage();
+
+  await page.goto('https://rpachallenge.com/');
+  await page.waitForSelector('.btn-large');
+  await page.click('.btn-large');
+
+
+  for (let i = 0; i < 10; i++) {
+    const currentData = jsonDataFromXlsx[i]; 
+    // await page.waitForTimeout(3000);
+
+    await page.type('input[ng-reflect-name="labelFirstName"]', currentData['First Name'], { delay: 30 });
+    await page.type('input[ng-reflect-name="labelLastName"]', currentData['Last Name '], { delay: 30 });
+    await page.type('input[ng-reflect-name="labelCompanyName"]', currentData['Company Name'], { delay: 30 });
+    await page.type('input[ng-reflect-name="labelRole"]', currentData['Role in Company'], { delay: 30 });
+    await page.type('input[ng-reflect-name="labelAddress"]', currentData['Address'], { delay: 30 });
+    await page.type('input[ng-reflect-name="labelEmail"]', currentData['Email'], { delay: 30 });
+    await page.type('input[ng-reflect-name="labelPhone"]', currentData['Phone Number'].toString(), { delay: 30 });
+
+    await page.click('input[type="submit"]'); 
+
+    await page.waitForTimeout(1000);
+  }
+
+  await page.screenshot({ path: 'screenshot.png' });
+  await browser.close();
+}
+
+RpaAutomate();
 
 async function ExtensionStart() {
-  const browser = await puppeteer.launch({headless:true,
-  executablePath:""});
+  const browser = await puppeteer.launch({headless:true});
   const page = await browser.newPage();
-  await page.goto("https://www.amazon.in/s?bbn=81107432031&rh=n%3A81107432031%2Cp_85%3A10440599031&_encoding=UTF8&content-id=amzn1.sym.0fbbbf4f-28a3-416c-9a01-83f0ac37db7a&pd_rd_r=071d86ca-c194-4279-876e-1b49e684359b&pd_rd_w=IvZd3&pd_rd_wg=rXX50&pf_rd_p=0fbbbf4f-28a3-416c-9a01-83f0ac37db7a&pf_rd_r=H7SVATVHJDMJ6RMQKFH8&ref=pd_gw_unk");
-  await page.screenshot({path:"amazon.png"})
+  await page.goto('https://rpachallenge.com/');
+  //tagname[contains(@attribute,'value')]
+  await page.$x("//input[contains(ng-reflect-name,'labelRole')]", el => el.value = 'Adenosine triphosphate')[0]
+  const b = (await page.$x("//*[text()='Library']"))[0]
+  await page.screenshot({path:"screenshot2.png"})
+  
 }
 
 ExtensionStart();
